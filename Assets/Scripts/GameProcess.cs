@@ -12,11 +12,11 @@ public class GameProcess : MonoBehaviour
     {
         foreach (var ship in FieldController.Instance._enemyShips)
         {
-            ship.GetComponent<Ship>()._isMovable = false;
+            ship.GetComponent<Image>().raycastTarget = false;
         }
     }
 
-    public Boolean GameCanBeStarted(List<GameObject> ships)
+    private Boolean GameCanBeStarted(List<GameObject> ships)
     {
         foreach (var ship in ships)
         {
@@ -34,7 +34,7 @@ public class GameProcess : MonoBehaviour
             _isPlayerShipsPlaced = true;
             foreach (var ship in FieldController.Instance._playerShips)
             {
-                ship.GetComponent<Ship>()._isMovable = false;
+                ship.GetComponent<Image>().raycastTarget = false;
                 var color = ship.GetComponent<Image>().color;
                 color.a = 0f;
                 ship.GetComponent<Image>().color = color;
@@ -42,7 +42,7 @@ public class GameProcess : MonoBehaviour
             
             foreach (var ship in FieldController.Instance._enemyShips)
             {
-                ship.GetComponent<Ship>()._isMovable = true;
+                ship.GetComponent<Image>().raycastTarget = true;
             }
         }
         else if (!_isEnemyShipsPlaced && GameCanBeStarted(FieldController.Instance._enemyShips))
@@ -51,10 +51,23 @@ public class GameProcess : MonoBehaviour
             
             foreach (var ship in FieldController.Instance._enemyShips)
             {
-                ship.GetComponent<Ship>()._isMovable = false;
+                ship.GetComponent<Image>().raycastTarget = false;
                 var color = ship.GetComponent<Image>().color;
                 color.a = 0f;
                 ship.GetComponent<Image>().color = color;
+            }
+        }
+
+        if (_isEnemyShipsPlaced && _isPlayerShipsPlaced)
+        {
+            foreach (var button in FieldController.Instance._playerButtons)
+            {
+                button.GetComponent<Button>().interactable = true;
+            }
+            
+            foreach (var button in FieldController.Instance._enemyButtons)
+            {
+                button.GetComponent<Button>().interactable = true;
             }
         }
     }

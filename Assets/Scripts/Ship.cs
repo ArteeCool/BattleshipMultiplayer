@@ -8,7 +8,6 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     [SerializeField] public Boolean _haveInvalidPlacement;
     [SerializeField] public Boolean _isEnemyShip;
     [SerializeField] public Boolean _wasPlaced;
-    [SerializeField] public Boolean _isMovable = true;
     
     [SerializeField] private Single _distanceToStick;
 
@@ -23,7 +22,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     private RectTransform _rTransform;
     
-    private const Single DragMultipler = 1f;
+    private const Single DragMultiplier = 1f;
     
     private void Start()
     {
@@ -34,7 +33,6 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (!_isMovable) return;
         if (eventData.button != PointerEventData.InputButton.Left) return;
         if (eventData.dragging) return;
         
@@ -55,8 +53,6 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!_isMovable) return;
-
         Vector2 mousePosition = _camera.ScreenToWorldPoint(Input.mousePosition);
         
         _dragOffset = (Vector2)_rTransform.position - mousePosition;
@@ -64,20 +60,16 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!_isMovable) return;
-
         if (Input.GetMouseButton(0))
         {
-            Vector2 mousePositon = _camera.ScreenToWorldPoint(Input.mousePosition);
-            var position = Vector2.MoveTowards(_rTransform.position, mousePositon + _dragOffset, DragMultipler);
+            Vector2 mousePosition = _camera.ScreenToWorldPoint(Input.mousePosition);
+            var position = Vector2.MoveTowards(_rTransform.position, mousePosition + _dragOffset, DragMultiplier);
             _rTransform.position = new Vector3(position.x, position.y, 0);
         }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (!_isMovable) return;
-
         Boolean wasPlaced = false;
         foreach (var button in FieldController.Instance._playerButtons)
         {

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Generic;   
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,8 +18,8 @@ public class FieldController : MonoBehaviour
     [SerializeField] public List<GameObject> _playerShips;
     [SerializeField] public List<GameObject> _enemyShips;
 
-    [SerializeField] private List<Int32> _playerField;
-    [SerializeField] private List<Int32> _enemyField;
+    [SerializeField] public List<Int32> _playerField;
+    [SerializeField] public List<Int32> _enemyField;
 
     [SerializeField] private Vector2 _offset;
 
@@ -36,6 +36,7 @@ public class FieldController : MonoBehaviour
         for (int i = 0; i < 100; i++)
         {
             var button = Instantiate(_buttonPrefab, Vector3.zero, Quaternion.identity, _playerButtonsParent.transform);
+            button.GetComponent<ButtonController>()._isPlayerField = true;
             _playerButtons.Add(button);
         }        
         
@@ -58,11 +59,10 @@ public class FieldController : MonoBehaviour
 
     public void FillFields(Boolean isPlayer)
     {
-        List<int> field = isPlayer ? _playerField : _enemyField;
         List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
         List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;
         
-        field = new List<int>();
+        List<int> field = new List<int>();
 
         for (int i = 0; i < buttons.Count; i++)
         {
@@ -129,8 +129,8 @@ public class FieldController : MonoBehaviour
         }
     }
 
-    public void CheckCollisions(Boolean isPlayer)
-    {
+     public void CheckCollisions(Boolean isPlayer)
+     {
         List<int> field = isPlayer ? _playerField : _enemyField;
         List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
         List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;
@@ -160,7 +160,7 @@ public class FieldController : MonoBehaviour
 
                         foreach (var deckIndex in shipDeckIndices)
                         {
-                            Int32 deckColisionsCount = 0;
+                            Int32 deckCollisionsCount = 0;
 
                             for (int j = -1; j <= 1; j++)
                             {
@@ -173,13 +173,34 @@ public class FieldController : MonoBehaviour
                                     if (checkIndex >= 0 && checkIndex < field.Count &&
                                         checkIndex % 10 == (deckIndex % 10) + j)
                                     {
+                                        foreach (var otherShip in ships)
+                                        {
+                                            if (ship == otherShip) continue;
+                                            
+                                            Vector2 nextPartOffset = shipClass._rotated ? new Vector2(0f, 66f) : new Vector2(66f, 0f);
+
+                                            Vector2 shipPosition = ship.GetComponent<RectTransform>().anchoredPosition;
+                                            Vector2 otherShipPosition = otherShip.GetComponent<RectTransform>().anchoredPosition;
+                                            
+                                            for (int l = 0; l < shipClass._deckCount; l++)
+                                            {
+                                                Vector2 currentDeckPosition = shipPosition + nextPartOffset * l;
+                                                
+                                                if (currentDeckPosition == otherShipPosition)
+                                                {
+                                                    hasCollision = true;
+                                                    break;
+                                                }
+                                            }
+                                        } 
+                                        
                                         if (field[checkIndex] == 1 && !shipDeckIndices.Contains(checkIndex))
-                                            deckColisionsCount++;
+                                            deckCollisionsCount++;
                                     }
                                 }
                             }
 
-                            if (deckColisionsCount > 0)
+                            if (deckCollisionsCount > 0)
                             {
                                 hasCollision = true;
                                 break;
@@ -208,5 +229,91 @@ public class FieldController : MonoBehaviour
                 break;
             }
         }
+    }
+
+    public void CheckIsKilled(Int32 index, Boolean isPlayer)
+    {
+        List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;
+        List<Int32> field = isPlayer ? _playerField : _enemyField;
+        List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
+
+        GameObject targetShip = null;
+        Ship shipClass;
+        
+        foreach (var ship in ships)
+        {
+            shipClass = ship.GetComponent<Ship>();
+
+            for (int i = 0; i < shipClass._deckCount; i++)
+            {
+                Vector2 nextPartOffset = shipClass._rotated ? new Vector2(0f, 66f) : new Vector2(66f, 0f);
+                if (ship.GetComponent<RectTransform>().anchoredPosition + nextPartOffset * i == buttons[index].GetComponent<RectTransform>().anchoredPosition + _offset)
+                {
+                    targetShip = ship;
+                    break;
+                }    
+            }
+        }
+        
+        shipClass = targetShip.GetComponent<Ship>();
+        Int32 shipStartIndex = 0;
+        
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            if (targetShip.GetComponent<RectTransform>().anchoredPosition == buttons[i].GetComponent<RectTransform>().anchoredPosition + _offset)
+            {
+                shipStartIndex = i;
+                break;
+            }    
+        }
+        
+        List<Int32> shipDeckIndices = new List<Int32>();
+        
+        for (int i = 0; i < shipClass._deckCount; i++)
+        {
+            Int32 newIndex = shipClass._rotated ? shipStartIndex - 10 * i : shipStartIndex + i;
+            shipDeckIndices.Add(newIndex);
+        }
+        
+        Int32 hitDeckCount = 0;
+        
+        foreach (var deckIndex in shipDeckIndices)
+        {
+            if (field[deckIndex] == 2) hitDeckCount++;
+        }
+        
+        if (hitDeckCount == shipClass._deckCount)
+        {
+            foreach (var deckIndex in shipDeckIndices)
+            {
+                buttons[deckIndex].GetComponent<Image>().color = Color.red;
+            
+
+            for (int j = -1; j <= 1; j++)
+            {
+                for (int k = -1; k <= 1; k++)
+                {
+                    if (j == 0 && k == 0) continue;
+                    
+                    Int32 checkIndex = deckIndex - 10 * k + j;
+
+                    if (checkIndex >= 0 && checkIndex < field.Count &&
+                        checkIndex % 10 == (deckIndex % 10) + j)
+                    {
+                        if (buttons[checkIndex].GetComponent<Button>().interactable)
+                        {
+                            buttons[checkIndex].GetComponent<ButtonController>().OnClick();
+                        }
+                    }
+                }
+            }
+        }
+        }
+    }
+
+    public Int32 GetPointState(Int32 index, Boolean isPlayer)
+    {
+        if (isPlayer) return _playerField[index];
+        return _enemyField[index];
     }
 }
