@@ -70,6 +70,11 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        TryPlace();
+    }
+
+    public Boolean TryPlace()
+    {
         Boolean wasPlaced = false;
         foreach (var button in FieldController.Instance._playerButtons)
         {
@@ -88,6 +93,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         
         FieldController.Instance.FillFields(!_isEnemyShip);
         FieldController.Instance.CheckCollisions(!_isEnemyShip);
+        return true;
     }
     
     public void OnPointerDown(PointerEventData eventData)

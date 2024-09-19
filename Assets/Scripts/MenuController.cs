@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MenuController : MonoBehaviour
 {
@@ -8,6 +9,28 @@ public class MenuController : MonoBehaviour
     [SerializeField] private GameObject _lobby;
     [SerializeField] private GameObject _quitMenu;
     [SerializeField] private GameObject _settingsMenu;
+    
+    [SerializeField] private Button _backButton;
+    [SerializeField] private Button _hostButton;
+
+    private void Start()
+    {
+        if (_mainMenu == null)
+        {
+            if (GameProcess.Instance._isMultiplayer)
+            {
+                _backButton.onClick.AddListener(NetworkController.Instance.Disconnect);
+            }
+            else
+            {
+                _backButton.onClick.AddListener(() => ChangeScene(0));
+            }
+        }
+        else
+        {
+            _hostButton.onClick.AddListener(NetworkController.Instance.HostServer);
+        }
+    }
 
     public void ActivateMainMenu()
     {
