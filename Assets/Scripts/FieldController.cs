@@ -308,7 +308,14 @@ public class FieldController : MonoBehaviour
                         {
                             if (buttons[checkIndex].GetComponent<Button>().interactable)
                             {
-                                buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick();
+                                if (GameProcess.Instance._isMultiplayer)
+                                {
+                                    buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick(checkIndex, false);
+                                }
+                                else
+                                {
+                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, false);
+                                }
                             }
                         }
                     }
@@ -321,7 +328,6 @@ public class FieldController : MonoBehaviour
 
     public Int32 GetPointState(Int32 index, Boolean isPlayer)
     {
-        Debug.Log(index);
         if (isPlayer) return _playerField[index];
         return _enemyField[index];
     }

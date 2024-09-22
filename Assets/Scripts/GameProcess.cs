@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Fusion;
 using Fusion.Sockets;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameProcess : MonoBehaviour
+public class GameProcess : MonoBehaviour 
 {
     public static GameProcess Instance;
     
@@ -193,11 +193,21 @@ public class GameProcess : MonoBehaviour
     {
         if (whoWon)
         {
-            _infoText.text = "Left player won";
+            _infoText.text = "Right player won";
         }
         else
         {
-            _infoText.text = "Right player won";
+            _infoText.text = "Left player won";
+        }
+
+        foreach (var button in FieldController.Instance._enemyButtons)
+        {
+            button.GetComponent<Button>().interactable = false;
+        }
+        
+        foreach (var button in FieldController.Instance._playerButtons)
+        {
+            button.GetComponent<Button>().interactable = false;
         }
     }
 

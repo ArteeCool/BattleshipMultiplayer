@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class NetworkController : Fusion.Behaviour, INetworkRunnerCallbacks
+public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
 {
     public static NetworkController Instance;
     
@@ -114,21 +114,6 @@ public class NetworkController : Fusion.Behaviour, INetworkRunnerCallbacks
         }
     }
 
-    public void ButtonActivator(GameObject button, Boolean isPlayerField)
-    {
-        var index = 0;
-        
-        if (FieldController.Instance._playerButtons.IndexOf(button) != -1)
-        {
-            index = FieldController.Instance._playerButtons.IndexOf(button);
-        }        
-        else if (FieldController.Instance._enemyButtons.IndexOf(button) != -1)
-        {
-            index = FieldController.Instance._enemyButtons.IndexOf(button);
-        }
-        
-    }
-
     #region UnusedCallbacks
     
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
@@ -217,7 +202,6 @@ public class NetworkController : Fusion.Behaviour, INetworkRunnerCallbacks
             {
                     ships[i].GetComponent<Ship>()._rotated = Convert.ToBoolean(Convert.ToInt32(data[i]));
 
-                    Debug.Log(Convert.ToInt32(data[i]));
                     Quaternion rotation = (Convert.ToInt32(data[i]) == 1) 
                         ? Quaternion.Euler(0f, 0f, 90f)
                         : Quaternion.Euler(0f, 0f, 0f);
