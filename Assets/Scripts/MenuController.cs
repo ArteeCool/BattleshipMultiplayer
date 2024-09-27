@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Fusion;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -19,7 +21,11 @@ public class MenuController : MonoBehaviour
         {
             if (GameProcess.Instance._isMultiplayer)
             {
-                _backButton.onClick.AddListener(NetworkController.Instance.Disconnect);
+                _backButton.onClick.AddListener(() =>
+                {
+                    NetworkController.Instance.Disconnect();
+                    Return();
+                });
             }
             else
             {
@@ -71,6 +77,12 @@ public class MenuController : MonoBehaviour
 
     public void ChangeScene(Int32 sceneIndex)
     {
+        if (!NetworkController.Instance._runner.LobbyInfo.IsValid) return;
         SceneManager.LoadScene(sceneIndex);
+    }
+    
+    public void Return()
+    {
+        SceneManager.LoadScene(0);
     }
 }

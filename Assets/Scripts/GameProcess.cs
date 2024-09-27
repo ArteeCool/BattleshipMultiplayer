@@ -11,15 +11,19 @@ public class GameProcess : MonoBehaviour
 {
     public static GameProcess Instance;
     
-    [SerializeField] private GameObject _interactionButton;
-    [SerializeField] private GameObject _randomButtonPlayer;
-    [SerializeField] private GameObject _randomButtonEnemy;
+    [SerializeField] public GameObject _interactionButton;
+    [SerializeField] public GameObject _randomButtonPlayer;
+    [SerializeField] public  GameObject _randomButtonEnemy;
+    [SerializeField] public GameObject _restartButton;
+    
+    [SerializeField] public GameObject _rpcGameObject;
     
     [SerializeField] public Boolean _isMultiplayer;
     
-    [SerializeField] private TextMeshProUGUI _infoText;
-    
-    private Boolean _isPlayerShipsPlaced;
+    [SerializeField] public TextMeshProUGUI _infoText;
+    [SerializeField] public TextMeshProUGUI _restartText;
+
+    public Boolean _isPlayerShipsPlaced;
     
     public Boolean _isEnemyShipsPlaced;
     
@@ -38,6 +42,21 @@ public class GameProcess : MonoBehaviour
         foreach (var ship in FieldController.Instance._enemyShips)
         {
             ship.GetComponent<Image>().raycastTarget = false;
+        }
+
+        if (_isMultiplayer)
+        {
+            foreach (var ship in FieldController.Instance._enemyShips)
+            {
+                ship.GetComponent<Image>().raycastTarget = false;
+                _randomButtonEnemy.GetComponent<Button>().interactable = false;
+            }    
+            
+            _restartButton.GetComponent<Button>().onClick.AddListener(() => _rpcGameObject.GetComponent<RPC>().RPC_RestartReady());
+        }
+        else
+        {
+            _restartButton.GetComponent<Button>().onClick.AddListener(() => Restart());
         }
     }
 
@@ -81,6 +100,16 @@ public class GameProcess : MonoBehaviour
                     NetworkController.Instance._runner.SendReliableDataToPlayer(playerRef, ReliableKey.FromInts(2) , indices .ToArray());
                 }
                 
+                foreach (var ship in FieldController.Instance._playerShips)
+                {
+                    ship.GetComponent<Image>().raycastTarget = false;
+                    var color = ship.GetComponent<Image>().color;
+                    color.a = 0f;
+                    ship.GetComponent<Image>().color = color;
+                }
+                
+                _randomButtonPlayer.SetActive(false);
+
                 NetworkController.Instance.CheckPlayersReadiness();
                 return;
             }
@@ -95,14 +124,6 @@ public class GameProcess : MonoBehaviour
                 foreach (var button in FieldController.Instance._enemyButtons)
                 {
                     button.GetComponent<Button>().interactable = true;
-                }
-
-                foreach (var ship in FieldController.Instance._playerShips)
-                {
-                    ship.GetComponent<Image>().raycastTarget = false;
-                    var color = ship.GetComponent<Image>().color;
-                    color.a = 0f;
-                    ship.GetComponent<Image>().color = color;
                 }
                 
                 foreach (var ship in FieldController.Instance._enemyShips)
@@ -177,27 +198,41 @@ public class GameProcess : MonoBehaviour
 
     private void ChangeFieldState(Boolean turnToChange)
     {
-
-            foreach (var button in FieldController.Instance._playerButtons)
-            {
-                button.GetComponent<Button>().interactable = turnToChange;
-            }
-            
-            foreach (var button in FieldController.Instance._enemyButtons)
-            {
-                button.GetComponent<Button>().interactable = !turnToChange;
-            }
+        foreach (var button in FieldController.Instance._playerButtons)
+        {
+            button.GetComponent<Button>().interactable = turnToChange;
+        }
+        
+        foreach (var button in FieldController.Instance._enemyButtons)
+        {
+            button.GetComponent<Button>().interactable = !turnToChange;
+        }
     }
 
     public void Win(Boolean whoWon)
     {
-        if (whoWon)
+        _restartButton.SetActive(true);
+        if (_isMultiplayer)
         {
-            _infoText.text = "Right player won";
+            if (whoWon)
+            {
+                _infoText.text = "You lost";
+            }
+            else
+            {
+                _infoText.text = "You won";
+            }
         }
         else
         {
-            _infoText.text = "Left player won";
+            if (whoWon)
+            {
+                _infoText.text = "Right player won";
+            }
+            else
+            {
+                _infoText.text = "Left player won";
+            }
         }
 
         foreach (var button in FieldController.Instance._enemyButtons)
@@ -210,9 +245,69 @@ public class GameProcess : MonoBehaviour
             button.GetComponent<Button>().interactable = false;
         }
     }
-
-    private void Restart()
+    
+    public void Restart()
     {
+        FieldController.Instance._playerField = new List<Int32>();
+
+        for (int i = 0; i < FieldController.Instance._playerField.Count; i++)
+        {
+            FieldController.Instance._playerField.Add(0);
+        }
         
+        FieldController.Instance._enemyField = new List<Int32>();
+
+        for (int i = 0; i < FieldController.Instance._enemyField.Count; i++)
+        {
+            FieldController.Instance._enemyField.Add(0);
+        }
+
+        foreach (var button in FieldController.Instance._playerButtons)
+        {
+            button.GetComponent<ButtonController>()._wasClicked = false;
+            button.GetComponentsInChildren<Image>()[1].sprite = null;
+            button.GetComponentsInChildren<Image>()[1].color = Color.white;
+        }
+        
+        foreach (var button in FieldController.Instance._enemyButtons)
+        {
+            button.GetComponent<ButtonController>()._wasClicked = false;
+            button.GetComponentsInChildren<Image>()[1].sprite = null;
+            button.GetComponentsInChildren<Image>()[1].color = Color.white;
+        }
+
+        Instance._isEnemyShipsPlaced = false;
+        Instance._isPlayerShipsPlaced = false;
+        _turn = false;
+        
+        Instance._randomButtonEnemy.SetActive(true);
+        Instance._randomButtonPlayer.SetActive(true);
+        Instance._interactionButton.SetActive(true);
+
+        foreach (var ship in FieldController.Instance._playerShips)
+        {
+            ship.GetComponent<RectTransform>().anchoredPosition = ship.GetComponent<Ship>()._startPosition;
+            ship.GetComponent<Image>().raycastTarget = true;
+            var color = ship.GetComponent<Image>().color;
+            color.a = 1f;
+            ship.GetComponent<Image>().color = color;
+            ship.GetComponent<RectTransform>().rotation = Quaternion.Euler(0f, 0f, 0f);
+            ship.GetComponent<Ship>()._rotated = false;
+        }        
+        
+        foreach (var ship in FieldController.Instance._enemyShips)
+        {
+            ship.GetComponent<RectTransform>().anchoredPosition = ship.GetComponent<Ship>()._startPosition;
+            ship.GetComponent<Image>().raycastTarget = true;
+            var color = ship.GetComponent<Image>().color;
+            color.a = 1f;
+            ship.GetComponent<Image>().color = color;
+            ship.GetComponent<RectTransform>().rotation = Quaternion.Euler(0f, 0f, 0f);
+            ship.GetComponent<Ship>()._rotated = false;
+        }
+        
+        Instance._infoText.text = String.Empty;
+        if(_isMultiplayer) NetworkController.Instance._playersReady = 0;
+        if(!_isMultiplayer) _restartButton.SetActive(false);
     }
 }

@@ -18,6 +18,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     [SerializeField] private GameObject _viewport;
 
     public Int32 _playersReady;
+    public Int32 _restartReady;
 
     private String _sessionName;
     
@@ -63,6 +64,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
 
     public void HostServer()
     {
+        if (!_runner.LobbyInfo.IsValid) return;
         _sessionName = Guid.NewGuid().ToString();
         StartGame(GameMode.Host);
     }
@@ -77,6 +79,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     
     public void JoinServer(String sessionName)
     {
+        if (!_runner.LobbyInfo.IsValid) return;
         _sessionName = sessionName;
         StartGame(GameMode.Client);
     }
@@ -86,7 +89,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
         _runner.Shutdown();
         MenuController menuController = new MenuController();
         
-        menuController.ChangeScene(0);
+        menuController.Return();
     }
     
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
@@ -178,6 +181,17 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
             FieldController.Instance._enemyField = arrayFromByte;
             GameProcess.Instance._isEnemyShipsPlaced = true;
             _playersReady++;
+                        
+            foreach (var ship in FieldController.Instance._enemyShips)
+            {
+                ship.GetComponent<Image>().raycastTarget = false;
+                var color = ship.GetComponent<Image>().color;
+                color.a = 0f;
+                ship.GetComponent<Image>().color = color;
+            }
+            
+            GameProcess.Instance._randomButtonEnemy.SetActive(false);
+            
             CheckPlayersReadiness();
         }
         else if (a == 2)

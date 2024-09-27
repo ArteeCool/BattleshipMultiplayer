@@ -12,6 +12,8 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     [SerializeField] private Single _distanceToStick;
 
     [SerializeField] public Vector2 _offset;
+    
+    [SerializeField] public Vector2 _startPosition;
 
     [SerializeField] public Int16 _deckCount;
         
@@ -29,6 +31,7 @@ public class Ship : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         _camera = Camera.main;
         _rTransform = GetComponent<RectTransform>();
         _lastPosition = _rTransform.anchoredPosition;
+        _startPosition = _rTransform.anchoredPosition;
     }
 
     public void OnPointerUp(PointerEventData eventData)

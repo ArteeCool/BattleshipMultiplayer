@@ -7,7 +7,7 @@ public class ButtonController : NetworkBehaviour
 {
     [SerializeField] public Boolean _isPlayerField;
 
-    private Boolean _wasClicked;
+    [SerializeField] public Boolean _wasClicked;
 
     private Button _button;
 
@@ -25,7 +25,7 @@ public class ButtonController : NetworkBehaviour
         if (GameProcess.Instance._isMultiplayer)
             GetComponent<Button>().onClick.AddListener(() => RPC_OnClick(index, true));
         else
-            GetComponent<Button>().onClick.AddListener(() => OnClick(_isPlayerField, true));
+            GetComponent<Button>().onClick.AddListener(() => OnClick(_isPlayerField, 0, true));
 
     }
     
@@ -34,24 +34,35 @@ public class ButtonController : NetworkBehaviour
     {
         if (info.Source.PlayerId == NetworkController.Instance._runner.LocalPlayer.PlayerId)
         {
-            FieldController.Instance._enemyButtons[index].GetComponent<ButtonController>().OnClick(false, needToChangeState);
+            if (needToChangeState)
+            {
+                foreach (var button in FieldController.Instance._enemyButtons)
+                {
+                    if (button.GetComponent<ButtonController>()._wasClicked) continue;
+                    button.GetComponent<Button>().interactable = false;
+                }
+            }
+            
+            FieldController.Instance._enemyButtons[index].GetComponent<ButtonController>().OnClick(false, info.Source.PlayerId, needToChangeState);
         }
         else
         {
-            foreach (var button in FieldController.Instance._enemyButtons)
+            if (needToChangeState)
             {
-                button.GetComponent<Button>().interactable = true;
+                foreach (var button in FieldController.Instance._enemyButtons)
+                {
+                    if (button.GetComponent<ButtonController>()._wasClicked) continue;
+                    button.GetComponent<Button>().interactable = true;
+                }
             }
-            
-            FieldController.Instance._playerButtons[index].GetComponent<ButtonController>().OnClick(true, false);
+
+            FieldController.Instance._playerButtons[index].GetComponent<ButtonController>().OnClick(true, info.Source.PlayerId,false);
         }
     }
 
-    public void OnClick(Boolean isPlayerField, Boolean needsToChangeTurn)
+    public void OnClick(Boolean isPlayerField, Int32 playerId, Boolean needsToChangeTurn)
     {
-        {
-            if (_wasClicked) return;
-
+        if (_wasClicked) return;
 
             Int32 index = isPlayerField
                 ? FieldController.Instance._playerButtons.IndexOf(gameObject)
@@ -59,26 +70,39 @@ public class ButtonController : NetworkBehaviour
 
             if (FieldController.Instance.GetPointState(index, isPlayerField) == 0)
             {
-                _button.interactable = false;
                 GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._missSprite;
                 if (needsToChangeTurn && !GameProcess.Instance._isMultiplayer)
                 {
                     GameProcess.Instance.ChangeTurn();
-                    
                 }
                 else if (needsToChangeTurn && GameProcess.Instance._isMultiplayer)
                 {
+                    Boolean change = playerId != NetworkController.Instance._runner.LocalPlayer.PlayerId;
+
                     foreach (var button in FieldController.Instance._enemyButtons)
                     {
-                        button.GetComponent<Button>().interactable = false;
+                        if (button.GetComponent<ButtonController>()._wasClicked) continue;
+                        button.GetComponent<Button>().interactable = change;
                     }
                 }
+                _button.interactable = false;
             }
             else if(FieldController.Instance.GetPointState(index, isPlayerField) == 1)
             {
-                _button.interactable = false;
-                GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._hitSprite;
+                Boolean change = playerId == NetworkController.Instance._runner.LocalPlayer.PlayerId;
 
+                if (needsToChangeTurn && GameProcess.Instance._isMultiplayer)
+                {
+                    foreach (var button in FieldController.Instance._enemyButtons)
+                    {
+                        if (button.GetComponent<ButtonController>()._wasClicked) continue;
+                        button.GetComponent<Button>().interactable = change;
+                    }
+                }
+
+                _button.interactable = false;
+                
+                GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._hitSprite;
 
                 if (isPlayerField)
                     FieldController.Instance._playerField[index] = 2;
@@ -89,6 +113,5 @@ public class ButtonController : NetworkBehaviour
             }
 
             _wasClicked = true;
-        }
     }
 }

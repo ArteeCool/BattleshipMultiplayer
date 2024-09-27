@@ -314,7 +314,7 @@ public class FieldController : MonoBehaviour
                                 }
                                 else
                                 {
-                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, false);
+                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, 0, false);
                                 }
                             }
                         }
@@ -376,6 +376,7 @@ public class FieldController : MonoBehaviour
         {
             PaintButtons(_playerShips, _playerButtons);
             PaintButtons(_enemyShips, _enemyButtons);
+            GameProcess.Instance._restartButton.SetActive(true);
             GameProcess.Instance.Win(isPlayer);
         }
     }
