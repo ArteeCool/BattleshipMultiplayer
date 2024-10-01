@@ -53,6 +53,7 @@ public class GameProcess : MonoBehaviour
             }    
             
             _restartButton.GetComponent<Button>().onClick.AddListener(() => _rpcGameObject.GetComponent<RPC>().RPC_RestartReady());
+            _interactionButton.GetComponent<Button>().interactable = false;
         }
         else
         {

@@ -91,7 +91,7 @@ public class ButtonController : NetworkBehaviour
             {
                 Boolean change = playerId == NetworkController.Instance._runner.LocalPlayer.PlayerId;
 
-                if (needsToChangeTurn && GameProcess.Instance._isMultiplayer)
+                if (GameProcess.Instance._isMultiplayer)
                 {
                     foreach (var button in FieldController.Instance._enemyButtons)
                     {

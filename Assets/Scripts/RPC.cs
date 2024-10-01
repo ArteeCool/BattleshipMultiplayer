@@ -11,7 +11,6 @@ public class RPC : NetworkBehaviour
     {
         if(NetworkController.Instance._runner.LocalPlayer.PlayerId == info.Source.PlayerId) GameProcess.Instance._restartButton.GetComponent<Button>().interactable = false;
         NetworkController.Instance._restartReady++;
-        GameProcess.Instance._restartText.text = $"{NetworkController.Instance._restartReady}/2 READY";
         
         if (NetworkController.Instance._restartReady == 2)
         {
@@ -20,5 +19,6 @@ public class RPC : NetworkBehaviour
             GameProcess.Instance._restartButton.SetActive(false);
             NetworkController.Instance._restartReady = 0;
         }
+        GameProcess.Instance._restartText.text = $"{NetworkController.Instance._restartReady}/2 READY";
     }
 }
