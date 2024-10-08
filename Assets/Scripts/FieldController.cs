@@ -289,6 +289,8 @@ public class FieldController : MonoBehaviour
         
         if (hitDeckCount == shipClass._deckCount)
         {
+            AudioController.Instance.PlaySfx(AudioController.Instance._killed);
+
             foreach (var deckIndex in shipDeckIndices)
             {
                 buttons[deckIndex].GetComponentsInChildren<Image>()[1].sprite = null;
@@ -310,17 +312,21 @@ public class FieldController : MonoBehaviour
                             {
                                 if (GameProcess.Instance._isMultiplayer)
                                 {
-                                    buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick(checkIndex, false);
+                                    buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick(checkIndex, false, false);
                                 }
                                 else
                                 {
-                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, 0, false);
+                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, 0, false, false);
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+        else
+        {
+            AudioController.Instance.PlaySfx(AudioController.Instance._hit);
         }
 
         CheckForWin(isPlayer);
@@ -374,14 +380,14 @@ public class FieldController : MonoBehaviour
 
         if (!hasAlivePart)
         {
-            PaintButtons(_playerShips, _playerButtons);
-            PaintButtons(_enemyShips, _enemyButtons);
+            PaintButtons(_playerShips, _playerButtons, _playerField);
+            PaintButtons(_enemyShips, _enemyButtons, _enemyField);
             GameProcess.Instance._restartButton.SetActive(true);
             GameProcess.Instance.Win(isPlayer);
         }
     }
 
-    private void PaintButtons(List<GameObject> ships, List<GameObject> buttons)
+    private void PaintButtons(List<GameObject> ships, List<GameObject> buttons, List<Int32> field)
     {
         foreach (var ship in ships)
         {
@@ -408,13 +414,19 @@ public class FieldController : MonoBehaviour
             foreach (var deckIndex in shipDeckIndices)
             {
                 buttons[deckIndex].GetComponentsInChildren<Image>()[1].sprite = null;
-                buttons[deckIndex].GetComponentsInChildren<Image>()[1].color = Color.black;
+                
+                if (field[deckIndex] == 1) 
+                    buttons[deckIndex].GetComponentsInChildren<Image>()[1].color = new Color(0.23f, 0.23f, 0.23f);
+                else
+                    buttons[deckIndex].GetComponentsInChildren<Image>()[1].color = Color.black;
             }
         }
     }
 
     public void Random(Boolean isPlayer)
     {
+        AudioController.Instance.PlaySfx(AudioController.Instance._click);
+
         List<int> field = isPlayer ? _playerField : _enemyField;
         List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
         List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,8 +15,6 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     public static NetworkController Instance;
     
     [SerializeField] private GameObject _sessionPrefab;
-    [SerializeField] private GameObject _viewport;
-    [SerializeField] private TMP_InputField _inputField;
 
     public Int32 _playersReady;
     public Int32 _restartReady;
@@ -24,7 +23,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     
     public NetworkRunner _runner;
 
-    private async void Start()
+    private async void Awake()
     {
         if (Instance == null)
         {
@@ -64,10 +63,16 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
 
     public void HostServer()
     {
+        AudioController.Instance.PlaySfx(AudioController.Instance._click);
         if (!_runner.LobbyInfo.IsValid) return;
-        if (String.IsNullOrWhiteSpace(_inputField.text)) return;
-        if (_inputField.text.Length > 10) return;
-        _sessionName = _inputField.text;
+        if (String.IsNullOrWhiteSpace(MenuVariable.Instance._inputField.text) ||
+            MenuVariable.Instance._inputField.text.Length > 20)
+        {
+            MenuVariable.Instance._errorText.SetActive(true);
+            return;
+        }
+
+        _sessionName = MenuVariable.Instance._inputField.text;
         StartGame(GameMode.Host);
     }
 
@@ -81,6 +86,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     
     public void JoinServer(String sessionName)
     {
+        AudioController.Instance.PlaySfx(AudioController.Instance._click);
         if (!_runner.LobbyInfo.IsValid) return;
         _sessionName = sessionName;
         StartGame(GameMode.Client);
@@ -96,14 +102,14 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     
     public void OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        foreach (Transform child in _viewport.transform)
+        foreach (Transform child in MenuVariable.Instance._viewport.transform)
         {
             Destroy(child.gameObject);
         }
         
         foreach (var sessionInfo in sessionList)
         {
-            var obj = Instantiate(_sessionPrefab, Vector3.zero, Quaternion.Euler(Vector3.zero), _viewport.transform);
+            var obj = Instantiate(_sessionPrefab, Vector3.zero, Quaternion.Euler(Vector3.zero), MenuVariable.Instance._viewport.transform);
 
             obj.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = sessionInfo.Name;
             obj.transform.GetChild(1).GetComponent<TextMeshProUGUI>().text = $"{sessionInfo.PlayerCount}/{sessionInfo.MaxPlayers}";
@@ -124,7 +130,12 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
     
     public void OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        if(player.PlayerId != _runner.LocalPlayer.PlayerId) GameProcess.Instance._interactionButton.GetComponent<Button>().interactable = true;
+        if (player.PlayerId != _runner.LocalPlayer.PlayerId)
+        {
+            GameProcess.Instance._interactionButton.GetComponent<Button>().interactable = true;
+            
+            GameProcess.Instance.GetInfo();
+        }
     }
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
@@ -132,6 +143,7 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
         if (_runner.IsServer)
         {
             GameProcess.Instance.Restart();
+            GameProfileViewmodel.Instance.Reset();
             GameProcess.Instance._interactionButton.GetComponent<Button>().interactable = false;
         }
     }
@@ -188,7 +200,29 @@ public class NetworkController : MonoBehaviour, INetworkRunnerCallbacks
                     ships[i].GetComponent<RectTransform>().rotation = rotation;
             }
         }
-        
+
+        StartCoroutine(FillProfile(a, data));
+    }
+
+    private IEnumerator FillProfile(Int32 a, ArraySegment<byte> data)
+    {
+        while (GameProfileViewmodel.Instance == null)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+
+        if (a == 3)
+        {
+            GameProfileViewmodel.Instance.Setup(false , Encoding.UTF8.GetString(data),-1,-1);
+        }
+        else if (a == 4)
+        {
+            GameProfileViewmodel.Instance.Setup(false, null, -1, Convert.ToInt32(Encoding.UTF8.GetString(data)));
+        }        
+        else if (a == 5)
+        {
+            GameProfileViewmodel.Instance.Setup(false, null, Convert.ToInt32(Encoding.UTF8.GetString(data)), -1);
+        }
     }
 
     #region UnusedCallbacks

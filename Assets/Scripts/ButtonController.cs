@@ -23,14 +23,14 @@ public class ButtonController : NetworkBehaviour
             index = FieldController.Instance._enemyButtons.IndexOf(gameObject);
 
         if (GameProcess.Instance._isMultiplayer)
-            GetComponent<Button>().onClick.AddListener(() => RPC_OnClick(index, true));
+            GetComponent<Button>().onClick.AddListener(() => RPC_OnClick(index, true, true));
         else
-            GetComponent<Button>().onClick.AddListener(() => OnClick(_isPlayerField, 0, true));
+            GetComponent<Button>().onClick.AddListener(() => OnClick(_isPlayerField, 0, true, true));
 
     }
     
     [Rpc (RpcSources.All, RpcTargets.All, HostMode = RpcHostMode.SourceIsHostPlayer)]
-    public void RPC_OnClick(Int32 index, Boolean needToChangeState, RpcInfo info = default)
+    public void RPC_OnClick(Int32 index, Boolean needToChangeState, Boolean playSound, RpcInfo info = default)
     {
         if (info.Source.PlayerId == NetworkController.Instance._runner.LocalPlayer.PlayerId)
         {
@@ -41,9 +41,10 @@ public class ButtonController : NetworkBehaviour
                     if (button.GetComponent<ButtonController>()._wasClicked) continue;
                     button.GetComponent<Button>().interactable = false;
                 }
+                GameProcess.Instance._infoText.text = "Waiting for enemy choice";
             }
             
-            FieldController.Instance._enemyButtons[index].GetComponent<ButtonController>().OnClick(false, info.Source.PlayerId, needToChangeState);
+            FieldController.Instance._enemyButtons[index].GetComponent<ButtonController>().OnClick(false, info.Source.PlayerId, needToChangeState, playSound);
         }
         else
         {
@@ -54,13 +55,14 @@ public class ButtonController : NetworkBehaviour
                     if (button.GetComponent<ButtonController>()._wasClicked) continue;
                     button.GetComponent<Button>().interactable = true;
                 }
+                GameProcess.Instance._infoText.text = "Your turn";
             }
 
-            FieldController.Instance._playerButtons[index].GetComponent<ButtonController>().OnClick(true, info.Source.PlayerId,false);
+            FieldController.Instance._playerButtons[index].GetComponent<ButtonController>().OnClick(true, info.Source.PlayerId,false, playSound);
         }
     }
 
-    public void OnClick(Boolean isPlayerField, Int32 playerId, Boolean needsToChangeTurn)
+    public void OnClick(Boolean isPlayerField, Int32 playerId, Boolean needsToChangeTurn, Boolean playSound)
     {
         if (_wasClicked) return;
 
@@ -71,6 +73,12 @@ public class ButtonController : NetworkBehaviour
             if (FieldController.Instance.GetPointState(index, isPlayerField) == 0)
             {
                 GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._missSprite;
+                
+                if (playSound)
+                {
+                    AudioController.Instance.PlaySfx(AudioController.Instance._miss);
+                }
+                
                 if (needsToChangeTurn && !GameProcess.Instance._isMultiplayer)
                 {
                     GameProcess.Instance.ChangeTurn();
@@ -84,7 +92,11 @@ public class ButtonController : NetworkBehaviour
                         if (button.GetComponent<ButtonController>()._wasClicked) continue;
                         button.GetComponent<Button>().interactable = change;
                     }
+                    
+                    GameProcess.Instance._infoText.text = change ? "Your turn" : "Waiting for enemy choice";
+                    
                 }
+
                 _button.interactable = false;
             }
             else if(FieldController.Instance.GetPointState(index, isPlayerField) == 1)
@@ -98,8 +110,9 @@ public class ButtonController : NetworkBehaviour
                         if (button.GetComponent<ButtonController>()._wasClicked) continue;
                         button.GetComponent<Button>().interactable = change;
                     }
+                    GameProcess.Instance._infoText.text = change ? "Your turn" : "Waiting for enemy choice";
                 }
-
+                
                 _button.interactable = false;
                 
                 GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._hitSprite;
