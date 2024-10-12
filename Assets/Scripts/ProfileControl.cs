@@ -34,8 +34,6 @@ public class ProfileControl : MonoBehaviour
             return;
         }
         
-        PlayFabSettings.DeveloperSecretKey = "BKKKKIJO1NBPPX8TOFUSWEHDG77M59J3MF8IQUNGFDCG9K6ZYE";
-        
         if (string.IsNullOrEmpty(PlayFabSettings.staticSettings.TitleId))
         {
             PlayFabSettings.staticSettings.TitleId = "D90EF";

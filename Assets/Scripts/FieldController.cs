@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;   
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -241,7 +241,7 @@ public class FieldController : MonoBehaviour
         List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;
         List<Int32> field = isPlayer ? _playerField : _enemyField;
         List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
-
+        
         GameObject targetShip = null;
         Ship shipClass;
         
@@ -308,16 +308,15 @@ public class FieldController : MonoBehaviour
                         if (checkIndex >= 0 && checkIndex < field.Count &&
                             checkIndex % 10 == (deckIndex % 10) + j)
                         {
-                            if (buttons[checkIndex].GetComponent<Button>().interactable)
+                            if (GameProcess.Instance._isMultiplayer && buttons[checkIndex].GetComponent<Button>().interactable)
                             {
-                                if (GameProcess.Instance._isMultiplayer)
-                                {
-                                    buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick(checkIndex, false, false);
-                                }
-                                else
-                                {
-                                    buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, 0, false, false);
-                                }
+                                buttons[checkIndex].GetComponent<ButtonController>().RPC_OnClick(checkIndex, false, false);
+                                buttons[checkIndex].GetComponent<Image>().color = new Color(1f, 0.51f, 0.5f);
+                            }
+                            else
+                            {
+                                buttons[checkIndex].GetComponent<ButtonController>().OnClick(isPlayer, 0, false, false);
+                                buttons[checkIndex].GetComponent<Image>().color = new Color(1f, 0.51f, 0.5f);
                             }
                         }
                     }
@@ -430,12 +429,16 @@ public class FieldController : MonoBehaviour
         List<int> field = isPlayer ? _playerField : _enemyField;
         List<GameObject> buttons = isPlayer ? _playerButtons : _enemyButtons;
         List<GameObject> ships = isPlayer ? _playerShips : _enemyShips;
-
+        
         Int32 placedShipsCount = 0;
         
 
         while (placedShipsCount < ships.Count)
         {
+            placedShipsCount = 0;
+
+            Boolean[,] fields = new Boolean[10, 10];
+            
             foreach (var ship in ships)
             {
                 Ship shipClass = ship.GetComponent<Ship>();
@@ -444,16 +447,26 @@ public class FieldController : MonoBehaviour
 
                 shipClass._haveInvalidPlacement = true;
                 
-                while (shipClass._haveInvalidPlacement && iterationCount <= 5000)
+                while (shipClass._haveInvalidPlacement && iterationCount <= 100)
                 {
+                    List<(Int32, Int32)> availablePlaces = new List<(Int32, Int32)>();
                     Int32 rotationDirection = UnityEngine.Random.Range(0, 2);
-                    Int32 maxWidth = rotationDirection == 0 ? 10 - (shipClass._deckCount - 1) : 10;
-                    Int32 maxHeight = rotationDirection == 1 ? 10 - (shipClass._deckCount - 1) : 10;
                     
-                    Int32 randomX = UnityEngine.Random.Range(0, maxWidth);
-                    Int32 randomY = UnityEngine.Random.Range(0, maxHeight);
+                    for (int i = 0; i < (rotationDirection == 0 ? 10 - (shipClass._deckCount - 1) : 10); i++)
+                    {
+                        for (int j = 0; j < (rotationDirection == 1 ? 10 - (shipClass._deckCount - 1) : 10); j++)
+                        {
+                            if (!fields[i, j])
+                            {
+                                availablePlaces.Add((i,j));
+                            }
+                        }
+                    }
+                    
+                    var (randomX, randomY) = availablePlaces[UnityEngine.Random.Range(0, availablePlaces.Count - 1)];
                     
                     Vector2 position = new Vector2(66.0f * randomX, -66.0f * randomY);
+                    
                     Quaternion rotation = (rotationDirection == 1) 
                         ? Quaternion.Euler(0f, 0f, 90f)
                         : Quaternion.Euler(0f, 0f, 0f);
@@ -462,7 +475,7 @@ public class FieldController : MonoBehaviour
                     RectTransform rectTransform = ship.GetComponent<RectTransform>();
                     rectTransform.rotation = rotation;
                     rectTransform.anchoredPosition = position + _offset;
-                    
+                        
                     shipClass.TryPlace();
                     
                     if (!shipClass._haveInvalidPlacement)
@@ -472,6 +485,8 @@ public class FieldController : MonoBehaviour
                     
                     iterationCount++;
                 }
+
+                Debug.Log(iterationCount);
             }
         }
     }

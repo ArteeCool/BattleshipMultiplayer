@@ -73,6 +73,7 @@ public class ButtonController : NetworkBehaviour
             if (FieldController.Instance.GetPointState(index, isPlayerField) == 0)
             {
                 GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._missSprite;
+                GetComponent<Image>().color = new Color(0.73f, 0.73f, 0.73f);
                 
                 if (playSound)
                 {
@@ -116,6 +117,7 @@ public class ButtonController : NetworkBehaviour
                 _button.interactable = false;
                 
                 GetComponentsInChildren<Image>()[1].sprite = FieldController.Instance._hitSprite;
+                GetComponent<Image>().color = new Color(1f, 0.88f, 0.55f);
 
                 if (isPlayerField)
                     FieldController.Instance._playerField[index] = 2;

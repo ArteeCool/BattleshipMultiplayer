@@ -24,12 +24,14 @@ public class GameProcess : MonoBehaviour
     
     [SerializeField] public TextMeshProUGUI _infoText;
     [SerializeField] public TextMeshProUGUI _restartText;
+
+    [SerializeField] public Boolean _gameEnded;
     
     public Boolean _isPlayerShipsPlaced;
     
     public Boolean _isEnemyShipsPlaced;
     
-    private Boolean _turn;
+    public Boolean _turn;
 
     private void Awake()
     {
@@ -230,12 +232,12 @@ public class GameProcess : MonoBehaviour
             {
                 foreach (var button in FieldController.Instance._playerButtons)
                 {
-                    button.GetComponent<Button>().interactable = true;
+                    button.GetComponent<Button>().interactable = false;
                 }
             
                 foreach (var button in FieldController.Instance._enemyButtons)
                 {
-                    button.GetComponent<Button>().interactable = false;
+                    button.GetComponent<Button>().interactable = true;
                 }
             
                 _interactionButton.SetActive(false);
@@ -252,19 +254,15 @@ public class GameProcess : MonoBehaviour
 
     private void ChangeFieldState(Boolean turnToChange)
     {
-        foreach (var button in FieldController.Instance._playerButtons)
-        {
-            button.GetComponent<Button>().interactable = turnToChange;
-        }
-        
         foreach (var button in FieldController.Instance._enemyButtons)
         {
-            button.GetComponent<Button>().interactable = !turnToChange;
+            button.GetComponent<Button>().interactable = turnToChange;
         }
     }
 
     public void Win(Boolean whoWon)
     {
+        _gameEnded = true;
         _restartButton.SetActive(true);
         if (_isMultiplayer)
         {
@@ -288,11 +286,13 @@ public class GameProcess : MonoBehaviour
         {
             if (whoWon)
             {
-                _infoText.text = "Right player won";
+                _infoText.text = "You lost";
+                AudioController.Instance.PlaySfx(AudioController.Instance._gameOver);
             }
             else
             {
-                _infoText.text = "Left player won";
+                _infoText.text = "You won";
+                AudioController.Instance.PlaySfx(AudioController.Instance._victory);
             }
         }
 
@@ -309,6 +309,8 @@ public class GameProcess : MonoBehaviour
     
     public void Restart()
     {
+        _gameEnded = false;
+        
         FieldController.Instance._playerField = new List<Int32>();
 
         for (int i = 0; i < FieldController.Instance._playerField.Count; i++)
@@ -341,7 +343,6 @@ public class GameProcess : MonoBehaviour
         Instance._isPlayerShipsPlaced = false;
         _turn = false;
         
-        Instance._randomButtonEnemy.SetActive(true);
         Instance._randomButtonPlayer.SetActive(true);
         Instance._interactionButton.SetActive(true);
 
@@ -361,7 +362,7 @@ public class GameProcess : MonoBehaviour
         {
             ship.GetComponent<Ship>()._wasPlaced = false; 
             ship.GetComponent<RectTransform>().anchoredPosition = ship.GetComponent<Ship>()._startPosition;
-            ship.GetComponent<Image>().raycastTarget = true;
+            ship.GetComponent<Image>().raycastTarget = false;
             var color = ship.GetComponent<Image>().color;
             color.a = 1f;
             ship.GetComponent<Image>().color = color;

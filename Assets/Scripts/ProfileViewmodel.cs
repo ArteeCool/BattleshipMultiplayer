@@ -30,11 +30,12 @@ public class ProfileViewmodel : MonoBehaviour
     {
         Setup();
         _profileNickname.onEndEdit.AddListener(ChangeNickname);
-
     }
 
     public void ChangeAvatar(Boolean next)
     {
+        AudioController.Instance.PlaySfx(AudioController.Instance._click);
+
         ProfileControl.Instance._profile.AvatarId += next ? 1 : -1;
         
         if (ProfileControl.Instance._profile.AvatarId < 0)

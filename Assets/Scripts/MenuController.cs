@@ -43,58 +43,54 @@ public class MenuController : MonoBehaviour
     public void ActivateMainMenu()
     {
         TurnOffAllMenus();
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
-        _mainMenu.SetActive(true);
-        _miniProfile.SetActive(true);
+        if(_mainMenu != null) _mainMenu.SetActive(true);
+        if(_miniProfile != null) _miniProfile.SetActive(true);
     }
 
     public void ActivateLobby()
     {
         TurnOffAllMenus();
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
-        _lobby.SetActive(true);
+        if(_lobby != null) _lobby.SetActive(true);
     }
     
     public void ActivateQuitMenu()
     {
         TurnOffAllMenus();
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
-        _quitMenu.SetActive(true);
+        if(_quitMenu != null) _quitMenu.SetActive(true);
     }
     
     public void ActivateProfileMenu()
     {
         TurnOffAllMenus();
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
-        _profileMenu.SetActive(true);
+        if(_profileMenu != null) _profileMenu.SetActive(true);
     }
     
     public void ActivateSettingsMenu()
     {
         TurnOffAllMenus();
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
-        _settingsMenu.SetActive(true);
+        if(_settingsMenu != null) _settingsMenu.SetActive(true);
     }
     
-    private void TurnOffAllMenus()
+    public void TurnOffAllMenus()
     {
-        _mainMenu.SetActive(false);
-        _lobby.SetActive(false);
-        _quitMenu.SetActive(false);
-        _settingsMenu.SetActive(false);
-        _profileMenu.SetActive(false);
-        _miniProfile.SetActive(false);
+        AudioController.Instance.PlaySfx(AudioController.Instance._click);
+        if(_mainMenu != null) _mainMenu.SetActive(false);
+        if(_lobby != null) _lobby.SetActive(false);
+        if(_quitMenu != null) _quitMenu.SetActive(false);
+        if(_settingsMenu != null) _settingsMenu.SetActive(false);
+        if(_profileMenu != null) _profileMenu.SetActive(false);
+        if(_miniProfile != null) _miniProfile.SetActive(false);
     }
 
     public void Quit()
     {
-        AudioController.Instance.PlaySfx(AudioController.Instance._click);
+        
         Application.Quit();
     }
 
     public void ChangeScene(Int32 sceneIndex)
     {
-        if (!NetworkController.Instance._runner.LobbyInfo.IsValid) return;
+        if(!NetworkController.Instance._runner.LobbyInfo.IsValid || Application.internetReachability == NetworkReachability.NotReachable) return;
         AudioController.Instance.PlaySfx(AudioController.Instance._click);
         SceneManager.LoadScene(sceneIndex);
     }
